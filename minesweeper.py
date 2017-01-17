@@ -114,5 +114,10 @@ class Cell(tk.Button, MineSweeper):
         if not total: total = "  "
         self.config(text=total, state=tk.DISABLED, relief=tk.SUNKEN)
 
+    def no_surronding_mines(self):
+        '''method called when the cell has no mines touching it, it reveals all the emtpy cells around the cell, upto
+           and including cells surronding mines, and upto mines'''
+        pass
+
 if __name__ == '__main__':
     MineSweeper(width=10, height=10)
