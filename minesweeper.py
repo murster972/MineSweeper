@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 import tkinter as tk
+from PIL import ImageTk
 from random import randint
+
+#TODO: Add Menu with options - New Game, Solve Game, Board Options(Size, Number of mines)
+#TODO: If an empty cell is clicked, make every empty cell surronding it in a "clicked" state aswell
+#TODO: add flags
+#TODO: Add error checking for module imports
+#TODO: Add status bar along bottom
 
 class MineSweeper:
     board = []
@@ -17,8 +24,14 @@ class MineSweeper:
 
         self.win = tk.Tk()
         self.gen_grid()
-        self.show_mines()
-        self.set_surronding_mines_text()
+        self.set_mines()
+
+        #add status bar
+        MineSweeper.status = tk.Label(self.win, text="MINES: {}".format(self.number_mines))
+        MineSweeper.status.grid(row=MineSweeper.width, column=0, columnspan=MineSweeper.width - 1, pady=5)
+
+        #self.show_mines()
+        #self.set_surronding_mines_text()
 
         self.win.mainloop()
 
@@ -29,19 +42,26 @@ class MineSweeper:
         for i in range(MineSweeper.height):
             MineSweeper.board.append([])
             for j in range(MineSweeper.width):
-                is_mine = False
-                if total_mines < self.number_mines: is_mine = True if randint(1, 2) % 2 == 0 else False
-                c = Cell(self.win, is_mine, i, j)
+                c = Cell(self.win, i, j)
                 c.grid(row=i, column=j)
                 c["command"] = c.clicked
                 MineSweeper.board[i].append(c)
+
+    def set_mines(self):
+        '''sets certain cells as mines'''
+        total = 0
+        while total != self.number_mines:
+            x, y = randint(0, MineSweeper.width - 1), randint(0, MineSweeper.height - 1)
+            if not MineSweeper.board[x][y].is_mine:
+                MineSweeper.board[x][y].is_mine = True
+                total += 1
 
     def show_mines(self):
         '''changes bg colour of mines to red'''
         for r in range(MineSweeper.height):
             for c in range(MineSweeper.width):
                 if MineSweeper.board[r][c].is_mine:
-                    MineSweeper.board[r][c].config(bg="red", activebackground="red")
+                    MineSweeper.board[r][c].config(bg="red", activebackground="red", state=tk.DISABLED)
 
     def set_surronding_mines_text(self):
         #TEMP METHOD USED FOR TESTING
@@ -51,20 +71,28 @@ class MineSweeper:
                 if not MineSweeper.board[r][c].is_mine:
                     MineSweeper.board[r][c].calc_surrounding_mines()
 
-class Cell(tk.Button):
+class Cell(tk.Button, MineSweeper):
     '''instance of a cell on the board'''
-    def __init__(self, win, is_mine, row, col):
+    def __init__(self, win, row, col):
         #two spaces are set as the default text so that when the cells text is changed
         #the size of the cell doesnt change
         super().__init__(win, text="  ")
-        self.is_mine = is_mine
+        self.is_mine = False
         self.row = row
         self.col = col
 
     def clicked(self):
         '''Method called when cell is clicked'''
-        self.calc_surrounding_mines()
-        #print(MineSweeper.board[self.row][self.col + 1].is_mine)
+        if self.is_mine:
+            self.reveal_mine()
+        else:
+            self.calc_surrounding_mines()
+
+    def reveal_mine(self):
+        '''revels cells as mine, and sets gameover'''
+        self.set_surronding_mines_text()
+        self.show_mines()
+        MineSweeper.status.config(text="GAME OVER")
 
     def calc_surrounding_mines(self):
         '''calculates and sets cell text to the number of mines touching the cell'''
@@ -82,7 +110,9 @@ class Cell(tk.Button):
         if self.col != 0: surr_mines.append(MineSweeper.board[self.row][self.col - 1].is_mine)
         if self.col != MineSweeper.width - 1: surr_mines.append(MineSweeper.board[self.row][self.col + 1].is_mine)
 
-        self.config(text=sum(surr_mines), state=tk.DISABLED, relief=tk.SUNKEN)
+        total = sum(surr_mines)
+        if not total: total = "  "
+        self.config(text=total, state=tk.DISABLED, relief=tk.SUNKEN)
 
 if __name__ == '__main__':
     MineSweeper(width=10, height=10)
