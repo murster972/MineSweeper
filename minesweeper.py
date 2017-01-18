@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import tkinter as tk
-from PIL import ImageTk
 from random import randint
 
 #TODO: Add Menu with options - New Game, Solve Game, Board Options(Size, Number of mines)
@@ -25,6 +24,8 @@ class MineSweeper:
         self.win = tk.Tk()
         self.gen_grid()
         self.set_mines()
+        self.show_mines()
+        self.set_surronding_mines_text()
 
         #add status bar
         MineSweeper.status = tk.Label(self.win, text="MINES: {}".format(self.number_mines))
@@ -61,7 +62,7 @@ class MineSweeper:
         for r in range(MineSweeper.height):
             for c in range(MineSweeper.width):
                 if MineSweeper.board[r][c].is_mine:
-                    MineSweeper.board[r][c].config(bg="red", activebackground="red", state=tk.DISABLED)
+                    MineSweeper.board[r][c].config(bg="red", activebackground="red", state=tk.DISABLED, text="X")
 
     def set_surronding_mines_text(self):
         #TEMP METHOD USED FOR TESTING
@@ -80,16 +81,20 @@ class Cell(tk.Button, MineSweeper):
         self.is_mine = False
         self.row = row
         self.col = col
+        self.surr_mines = None
+        self.checked_surr = False
 
     def clicked(self):
         '''Method called when cell is clicked'''
         if self.is_mine:
-            self.reveal_mine()
+            self.game_over()
         else:
             self.calc_surrounding_mines()
 
-    def reveal_mine(self):
+    def game_over(self):
         '''revels cells as mine, and sets gameover'''
+        self.config(text="X")
+
         self.set_surronding_mines_text()
         self.show_mines()
         MineSweeper.status.config(text="GAME OVER")
@@ -110,14 +115,24 @@ class Cell(tk.Button, MineSweeper):
         if self.col != 0: surr_mines.append(MineSweeper.board[self.row][self.col - 1].is_mine)
         if self.col != MineSweeper.width - 1: surr_mines.append(MineSweeper.board[self.row][self.col + 1].is_mine)
 
-        total = sum(surr_mines)
-        if not total: total = "  "
-        self.config(text=total, state=tk.DISABLED, relief=tk.SUNKEN)
+        self.surr_mines = sum(surr_mines)
+
+        #ONLY TEMP, SHOULD STILL BE CHANGED IF EMTPY
+        #if not total: total = "  "
+        if not self.checked_surr:
+            if self.surr_mines:
+                self.config(text=self.surr_mines, state=tk.DISABLED, relief=tk.SUNKEN)
+            else:
+                self.no_surronding_mines()
+
+        #self.checked_surr = True
 
     def no_surronding_mines(self):
         '''method called when the cell has no mines touching it, it reveals all the emtpy cells around the cell, upto
            and including cells surronding mines, and upto mines'''
-        pass
+        empty_surr_cells = []
+
+        
 
 if __name__ == '__main__':
     MineSweeper(width=10, height=10)
